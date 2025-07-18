@@ -7,15 +7,25 @@ mod console;
 mod logic;
 
 pub fn run() -> Result<(), io::Error> {
-    let mut game = Game::new(78, 22);
-    let mut console = Console::new(80, 24)?;
+    let mut game = Game::new(80, 24);
+    let mut console = Console::new(80, 24, "Goblin Castle")?;
 
     loop {
         console.clear();
-        draw_rectangle(&mut console);
+
+        for y in 0..24 {
+            for x in 0..80 {
+                let ch = match game.level().get_tile(x, y) {
+                    logic::Tile::Wall => '#',
+                    logic::Tile::Floor => '.',
+                };
+                console.set_char(x, y, ch);
+            }
+        }
+
         let (x, y) = game.player();
-        console.set_char(x + 1, y + 1, '@');
-        console.show_cursor(x + 1, y + 1);
+        console.set_char(x.into(), y.into(), '@');
+        console.show_cursor(x.into(), y.into());
         console.display()?;
 
         match get_command(&mut console)? {
@@ -25,22 +35,6 @@ pub fn run() -> Result<(), io::Error> {
     }
 
     Ok(())
-}
-
-// very inefficient if translated directly into curses
-fn draw_rectangle(console: &mut Console) {
-    for x in 1..=78 {
-        console.set_char(x, 0, '-');
-        console.set_char(x, 23, '-');
-    }
-    for y in 1..=22 {
-        console.set_char(0, y, '|');
-        console.set_char(79, y, '|');
-    }
-    console.set_char(0, 0, '+');
-    console.set_char(79, 0, '+');
-    console.set_char(0, 23, '+');
-    console.set_char(79, 23, '+');
 }
 
 pub enum Command {

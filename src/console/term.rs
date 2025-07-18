@@ -5,7 +5,7 @@ use crossterm::{
     event::{KeyCode, KeyEventKind, KeyModifiers},
     execute, queue,
     style::Print,
-    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen, SetTitle},
 };
 
 use super::{Buffer, Event};
@@ -26,7 +26,7 @@ impl Terminal {
         &mut self,
         current: &Buffer,
         previous: &Buffer,
-        cursor: Option<(u16, u16)>,
+        cursor: Option<(usize, usize)>,
     ) -> Result<(), io::Error> {
         debug_assert!(current.width == previous.width && current.height == previous.height);
         let (mut cx, mut cy) = (usize::MAX, usize::MAX);
@@ -45,9 +45,14 @@ impl Terminal {
             }
         }
         if let Some((x, y)) = cursor {
-            queue!(self.stdout, MoveTo(x, y), cursor::Show)?;
+            debug_assert!(x < current.width && y < current.height);
+            queue!(self.stdout, MoveTo(x as u16, y as u16), cursor::Show)?;
         }
         self.stdout.flush()
+    }
+
+    pub fn set_title(&mut self, title: &str) -> Result<(), io::Error> {
+        execute!(self.stdout, SetTitle(title))
     }
 
     pub fn alert(&mut self) -> Result<(), io::Error> {

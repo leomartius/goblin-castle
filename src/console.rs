@@ -6,15 +6,17 @@ pub struct Console {
     terminal: term::Terminal,
     front: Buffer,
     back: Buffer,
-    cursor: Option<(u16, u16)>,
+    cursor: Option<(usize, usize)>,
 }
 
 impl Console {
-    pub fn new(width: u16, height: u16) -> Result<Self, io::Error> {
+    pub fn new(width: usize, height: usize, title: &str) -> Result<Self, io::Error> {
+        let mut terminal = term::Terminal::new()?;
+        terminal.set_title(title)?;
         Ok(Console {
-            terminal: term::Terminal::new()?,
-            front: Buffer::new(width.into(), height.into()),
-            back: Buffer::new(width.into(), height.into()),
+            terminal,
+            front: Buffer::new(width, height),
+            back: Buffer::new(width, height),
             cursor: None,
         })
     }
@@ -24,11 +26,11 @@ impl Console {
         self.cursor = None;
     }
 
-    pub fn set_char(&mut self, x: u16, y: u16, ch: char) {
-        self.back.set(x.into(), y.into(), ch as u8);
+    pub fn set_char(&mut self, x: usize, y: usize, ch: char) {
+        self.back.set(x, y, ch as u8);
     }
 
-    pub fn show_cursor(&mut self, x: u16, y: u16) {
+    pub fn show_cursor(&mut self, x: usize, y: usize) {
         self.cursor = Some((x, y));
     }
 

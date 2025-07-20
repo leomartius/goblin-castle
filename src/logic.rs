@@ -3,40 +3,52 @@ use level::Level;
 mod level;
 
 pub struct Game {
-    width: u16,
-    height: u16,
-    player: (u16, u16),
     level: Level,
 }
 
 impl Game {
-    pub fn new(width: u16, height: u16) -> Self {
-        let mut level = Level::new(width.into(), height.into());
+    pub fn new() -> Self {
+        let mut level = Level::new(80, 24);
         for y in 7..17 {
             for x in 25..55 {
                 level.set_tile(x, y, Tile::Floor);
             }
         }
-        Game {
-            width,
-            height,
-            player: (width / 2, height / 2),
-            level,
-        }
+        let player = Entity {
+            x: 40,
+            y: 12,
+            glyph: Glyph::Player,
+        };
+        level.add_entity(player);
+        let goblin = Entity {
+            x: 30,
+            y: 12,
+            glyph: Glyph::Goblin,
+        };
+        level.add_entity(goblin);
+        Game { level }
     }
 
-    pub fn player(&self) -> (u16, u16) {
-        self.player
+    pub fn player(&self) -> &Entity {
+        &self.level.entities()[0]
+    }
+
+    fn player_mut(&mut self) -> &mut Entity {
+        &mut self.level.entities_mut()[0]
     }
 
     pub fn move_player(&mut self, dx: i8, dy: i8) -> Result<(), ()> {
-        let x = self.player.0 as i32 + dx as i32;
-        let y = self.player.1 as i32 + dy as i32;
-        if 0 <= x && x < self.width.into() && 0 <= y && y < self.height.into() {
+        let x = self.player().x as i32 + dx as i32;
+        let y = self.player().y as i32 + dy as i32;
+        if x >= 0 && y >= 0 {
             let x = x as usize;
             let y = y as usize;
-            if self.level.get_tile(x, y) == Tile::Floor {
-                self.player = (x as u16, y as u16);
+            if x < self.level.width()
+                && y < self.level.height()
+                && self.level.get_tile(x, y) == Tile::Floor
+            {
+                self.player_mut().x = x as u8;
+                self.player_mut().y = y as u8;
                 return Ok(());
             }
         }
@@ -52,4 +64,15 @@ impl Game {
 pub enum Tile {
     Wall,
     Floor,
+}
+
+pub enum Glyph {
+    Player,
+    Goblin,
+}
+
+pub struct Entity {
+    pub x: u8,
+    pub y: u8,
+    pub glyph: Glyph,
 }

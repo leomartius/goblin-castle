@@ -7,8 +7,8 @@ mod console;
 mod logic;
 
 pub fn run() -> Result<(), io::Error> {
-    let mut game = Game::new(80, 24);
     let mut console = Console::new(80, 24, "Goblin Castle")?;
+    let mut game = Game::new();
 
     loop {
         console.clear();
@@ -23,9 +23,15 @@ pub fn run() -> Result<(), io::Error> {
             }
         }
 
-        let (x, y) = game.player();
-        console.set_char(x.into(), y.into(), '@');
-        console.show_cursor(x.into(), y.into());
+        for e in game.level().entities() {
+            let ch = match e.glyph {
+                logic::Glyph::Player => '@',
+                logic::Glyph::Goblin => 'g',
+            };
+            console.set_char(e.x as usize, e.y as usize, ch);
+        }
+        let player = game.player();
+        console.show_cursor(player.x as usize, player.y as usize);
         console.display()?;
 
         match get_command(&mut console)? {

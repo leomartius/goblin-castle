@@ -1,5 +1,6 @@
 use level::Level;
 
+mod generate;
 mod level;
 
 pub struct Game {
@@ -8,12 +9,7 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Self {
-        let mut level = Level::new(80, 24);
-        for y in 7..17 {
-            for x in 25..55 {
-                level.set_tile(x, y, Tile::Floor);
-            }
-        }
+        let mut level = generate::generate_level();
         let player = Entity {
             x: 40,
             y: 12,

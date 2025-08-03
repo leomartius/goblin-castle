@@ -3,8 +3,7 @@ use std::cmp::{max, min};
 use log::info;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
-use super::Tile;
-use super::level::Level;
+use super::{Entity, Glyph, Tile, level::Level};
 
 struct Room {
     x0: usize,
@@ -66,6 +65,12 @@ impl Room {
         draw_line(xa, ya, xm, ym, level);
         draw_line(xm, ym, xb, yb, level);
     }
+
+    fn pick_xy(&self, rng: &mut impl Rng) -> (usize, usize) {
+        let x = rng.random_range(self.x0 + 1..=self.x1 - 1);
+        let y = rng.random_range(self.y0 + 1..=self.y1 - 1);
+        (x, y)
+    }
 }
 
 pub fn generate_level() -> Level {
@@ -84,7 +89,9 @@ pub fn generate_level() -> Level {
         rooms.push(room);
     }
 
-    let mut level = Level::new(width, height);
+    let entry_point = rooms[0].pick_xy(&mut rng);
+    let mut level = Level::new(width, height, entry_point);
+
     for room in &rooms {
         room.carve(&mut level);
     }
@@ -93,6 +100,10 @@ pub fn generate_level() -> Level {
         if let [room1, room2] = room1_room2 {
             room1.tunnel_to(room2, &mut level, &mut rng);
         }
+    }
+
+    for room in &rooms {
+        place_monsters(room, &mut level, &mut rng);
     }
 
     level
@@ -114,5 +125,21 @@ fn draw_line(x1: usize, y1: usize, x2: usize, y2: usize, level: &mut Level) {
         for x in min(x1, x2)..=max(x1, x2) {
             level.set_tile(x, y1, Tile::Floor);
         }
+    }
+}
+
+fn place_monsters(room: &Room, level: &mut Level, rng: &mut impl Rng) {
+    for _ in 0..rng.random_range(0..=2) {
+        let (x, y) = room.pick_xy(rng);
+        if level.actors().iter().any(|e| e.pos() == (x, y)) {
+            continue;
+        }
+        let glyph = if rng.random_ratio(4, 5) {
+            Glyph::Goblin
+        } else {
+            Glyph::Hobgobin
+        };
+        let goblin = Entity::new(x, y, glyph);
+        level.add_actor(goblin);
     }
 }

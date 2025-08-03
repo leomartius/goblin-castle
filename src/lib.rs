@@ -1,7 +1,7 @@
 use std::io;
 
 use console::{Console, Event};
-use logic::Game;
+use logic::{Entity, Game};
 
 mod console;
 mod logic;
@@ -23,15 +23,12 @@ pub fn run() -> Result<(), io::Error> {
             }
         }
 
-        for e in game.level().entities() {
-            let ch = match e.glyph {
-                logic::Glyph::Player => '@',
-                logic::Glyph::Goblin => 'g',
-            };
-            console.set_char(e.x as usize, e.y as usize, ch);
+        for e in game.level().actors() {
+            render_entity(&mut console, e);
         }
-        let player = game.player();
-        console.show_cursor(player.x as usize, player.y as usize);
+        let player = game.level().player().unwrap();
+        render_entity(&mut console, player);
+        console.show_cursor(player.x(), player.y());
         console.display()?;
 
         match get_command(&mut console)? {
@@ -41,6 +38,15 @@ pub fn run() -> Result<(), io::Error> {
     }
 
     Ok(())
+}
+
+fn render_entity(console: &mut Console, entity: &Entity) {
+    let ch = match entity.glyph {
+        logic::Glyph::Player => '@',
+        logic::Glyph::Goblin => 'g',
+        logic::Glyph::Hobgobin => 'H',
+    };
+    console.set_char(entity.x(), entity.y(), ch);
 }
 
 pub enum Command {

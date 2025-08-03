@@ -10,32 +10,16 @@ pub struct Game {
 impl Game {
     pub fn new() -> Self {
         let mut level = generate::generate_level();
-        let player = Entity {
-            x: 40,
-            y: 12,
-            glyph: Glyph::Player,
-        };
-        level.add_entity(player);
-        let goblin = Entity {
-            x: 30,
-            y: 12,
-            glyph: Glyph::Goblin,
-        };
-        level.add_entity(goblin);
+        let (x, y) = level.entry();
+        let player = Entity::new(x, y, Glyph::Player);
+        level.add_player(player);
         Game { level }
     }
 
-    pub fn player(&self) -> &Entity {
-        &self.level.entities()[0]
-    }
-
-    fn player_mut(&mut self) -> &mut Entity {
-        &mut self.level.entities_mut()[0]
-    }
-
     pub fn move_player(&mut self, dx: i8, dy: i8) -> Result<(), ()> {
-        let x = self.player().x as i32 + dx as i32;
-        let y = self.player().y as i32 + dy as i32;
+        let player = self.level.player().unwrap();
+        let x = player.x() as i32 + dx as i32;
+        let y = player.y() as i32 + dy as i32;
         if x >= 0 && y >= 0 {
             let x = x as usize;
             let y = y as usize;
@@ -43,8 +27,8 @@ impl Game {
                 && y < self.level.height()
                 && self.level.get_tile(x, y) == Tile::Floor
             {
-                self.player_mut().x = x as u8;
-                self.player_mut().y = y as u8;
+                let player = self.level.player_mut().unwrap();
+                player.set_pos(x, y);
                 return Ok(());
             }
         }
@@ -65,10 +49,38 @@ pub enum Tile {
 pub enum Glyph {
     Player,
     Goblin,
+    Hobgobin,
 }
 
 pub struct Entity {
-    pub x: u8,
-    pub y: u8,
+    x: u8,
+    y: u8,
     pub glyph: Glyph,
+}
+
+impl Entity {
+    pub fn new(x: usize, y: usize, glyph: Glyph) -> Self {
+        Entity {
+            x: x as u8,
+            y: y as u8,
+            glyph,
+        }
+    }
+
+    pub fn x(&self) -> usize {
+        self.x as usize
+    }
+
+    pub fn y(&self) -> usize {
+        self.y as usize
+    }
+
+    pub fn pos(&self) -> (usize, usize) {
+        (self.x as usize, self.y as usize)
+    }
+
+    pub fn set_pos(&mut self, x: usize, y: usize) {
+        self.x = x as u8;
+        self.y = y as u8;
+    }
 }

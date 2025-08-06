@@ -1,5 +1,6 @@
 use level::Level;
 
+mod fov;
 mod generate;
 mod level;
 
@@ -13,6 +14,7 @@ impl Game {
         let (x, y) = level.entry();
         let player = Entity::new(x, y, Glyph::Player);
         level.add_player(player);
+        level.update_vision();
         Game { level }
     }
 
@@ -29,6 +31,7 @@ impl Game {
             {
                 let player = self.level.player_mut().unwrap();
                 player.set_pos(x, y);
+                self.level.update_vision();
                 return Ok(());
             }
         }

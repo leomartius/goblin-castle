@@ -1,3 +1,4 @@
+use super::fov::compute_fov;
 use super::{Entity, Tile};
 
 pub struct Level {
@@ -5,6 +6,8 @@ pub struct Level {
     height: usize,
     entry: (usize, usize),
     tiles: Vec<Tile>,
+    visible: Vec<bool>,
+    explored: Vec<bool>,
     actors: Vec<Entity>,
     player: Option<Entity>,
 }
@@ -16,6 +19,8 @@ impl Level {
             height,
             entry,
             tiles: vec![Tile::Wall; width * height],
+            visible: vec![false; width * height],
+            explored: vec![false; width * height],
             actors: Vec::new(),
             player: None,
         }
@@ -43,6 +48,16 @@ impl Level {
         self.tiles[y * self.width + x] = tile;
     }
 
+    pub fn is_visible(&self, x: usize, y: usize) -> bool {
+        debug_assert!(x < self.width && y < self.height);
+        self.visible[y * self.width + x]
+    }
+
+    pub fn is_explored(&self, x: usize, y: usize) -> bool {
+        debug_assert!(x < self.width && y < self.height);
+        self.explored[y * self.width + x]
+    }
+
     pub fn actors(&self) -> &[Entity] {
         &self.actors
     }
@@ -61,5 +76,20 @@ impl Level {
 
     pub fn add_player(&mut self, e: Entity) {
         self.player = Some(e);
+    }
+
+    pub fn update_vision(&mut self) {
+        // update visibility based on the player's position
+        compute_fov(
+            &mut self.visible,
+            self.width as i32,
+            self.height as i32,
+            self.player.as_ref().unwrap().x() as i32,
+            self.player.as_ref().unwrap().y() as i32,
+        );
+        // update explored tiles based on current visibility
+        for (e, v) in self.explored.iter_mut().zip(&self.visible) {
+            *e = *e || *v;
+        }
     }
 }

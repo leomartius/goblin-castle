@@ -1,35 +1,18 @@
 use std::io;
 
 use console::{Console, Event};
-use logic::{Entity, Game};
+use logic::Game;
 
 mod console;
 mod logic;
+mod render;
 
 pub fn run() -> Result<(), io::Error> {
     let mut console = Console::new(80, 24, "Goblin Castle")?;
     let mut game = Game::new();
 
     loop {
-        console.clear();
-
-        for y in 0..24 {
-            for x in 0..80 {
-                let ch = match game.level().get_tile(x, y) {
-                    logic::Tile::Wall => '#',
-                    logic::Tile::Floor => '.',
-                };
-                console.set_char(x, y, ch);
-            }
-        }
-
-        for e in game.level().actors() {
-            render_entity(&mut console, e);
-        }
-        let player = game.level().player().unwrap();
-        render_entity(&mut console, player);
-        console.show_cursor(player.x(), player.y());
-        console.display()?;
+        render::render_map(&mut console, &game)?;
 
         match get_command(&mut console)? {
             Command::Move(dx, dy) => game.move_player(dx, dy).or_else(|_| console.alert())?,
@@ -38,15 +21,6 @@ pub fn run() -> Result<(), io::Error> {
     }
 
     Ok(())
-}
-
-fn render_entity(console: &mut Console, entity: &Entity) {
-    let ch = match entity.glyph {
-        logic::Glyph::Player => '@',
-        logic::Glyph::Goblin => 'g',
-        logic::Glyph::Hobgobin => 'H',
-    };
-    console.set_char(entity.x(), entity.y(), ch);
 }
 
 pub enum Command {

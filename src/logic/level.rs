@@ -84,6 +84,7 @@ impl Level {
             &mut self.visible,
             self.width as i32,
             self.height as i32,
+            |x, y| self.tiles[y as usize * self.width + x as usize] != Tile::Wall,
             self.player.as_ref().unwrap().x() as i32,
             self.player.as_ref().unwrap().y() as i32,
         );

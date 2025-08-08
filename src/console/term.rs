@@ -4,11 +4,14 @@ use crossterm::{
     cursor::{self, MoveTo},
     event::{KeyCode, KeyEventKind, KeyModifiers},
     execute, queue,
-    style::Print,
+    style::{Print, SetBackgroundColor, SetForegroundColor},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen, SetTitle},
 };
 
 use super::{Buffer, Event};
+
+use super::Color as ApiColor;
+use crossterm::style::Color as TermColor;
 
 pub struct Terminal {
     stdout: Stdout,
@@ -30,16 +33,31 @@ impl Terminal {
     ) -> Result<(), io::Error> {
         debug_assert!(current.width == previous.width && current.height == previous.height);
         let (mut cx, mut cy) = (usize::MAX, usize::MAX);
-        queue!(self.stdout, cursor::Hide)?;
+        let mut last_fg = ApiColor::Default;
+        let mut last_bg = ApiColor::Default;
+        queue!(
+            self.stdout,
+            cursor::Hide,
+            SetForegroundColor(TermColor::Reset),
+            SetBackgroundColor(TermColor::Reset)
+        )?;
         for y in 0..current.height {
             for x in 0..current.width {
-                let curr = current.get(x, y) as char;
-                let prev = previous.get(x, y) as char;
+                let curr = current.get(x, y);
+                let prev = previous.get(x, y);
                 if curr != prev {
                     if (x != cx) || (y != cy) {
                         queue!(self.stdout, MoveTo(x as u16, y as u16))?;
                     }
-                    queue!(self.stdout, Print(curr))?;
+                    if curr.fg != last_fg {
+                        queue!(self.stdout, SetForegroundColor(convert_color(curr.fg)))?;
+                        last_fg = curr.fg;
+                    }
+                    if curr.bg != last_bg {
+                        queue!(self.stdout, SetBackgroundColor(convert_color(curr.bg)))?;
+                        last_bg = curr.bg;
+                    }
+                    queue!(self.stdout, Print(curr.ch))?;
                     (cx, cy) = (x + 1, y);
                 }
             }
@@ -73,6 +91,28 @@ impl Terminal {
                 }
             }
         }
+    }
+}
+
+fn convert_color(color: ApiColor) -> TermColor {
+    match color {
+        ApiColor::Default => TermColor::Reset,
+        ApiColor::Black => TermColor::Black,
+        ApiColor::Red => TermColor::DarkRed,
+        ApiColor::Green => TermColor::DarkGreen,
+        ApiColor::Yellow => TermColor::DarkYellow,
+        ApiColor::Blue => TermColor::DarkBlue,
+        ApiColor::Magenta => TermColor::DarkMagenta,
+        ApiColor::Cyan => TermColor::DarkCyan,
+        ApiColor::White => TermColor::Grey,
+        ApiColor::BrightBlack => TermColor::DarkGrey,
+        ApiColor::BrightRed => TermColor::Red,
+        ApiColor::BrightGreen => TermColor::Green,
+        ApiColor::BrightYellow => TermColor::Yellow,
+        ApiColor::BrightBlue => TermColor::Blue,
+        ApiColor::BrightMagenta => TermColor::Magenta,
+        ApiColor::BrightCyan => TermColor::Cyan,
+        ApiColor::BrightWhite => TermColor::White,
     }
 }
 

@@ -26,8 +26,8 @@ impl Console {
         self.cursor = None;
     }
 
-    pub fn set_char(&mut self, x: usize, y: usize, ch: char) {
-        self.back.set(x, y, ch as u8);
+    pub fn set_cell(&mut self, x: usize, y: usize, cell: Cell) {
+        self.back.set(x, y, cell);
     }
 
     pub fn show_cursor(&mut self, x: usize, y: usize) {
@@ -48,10 +48,56 @@ impl Console {
     }
 }
 
+#[derive(Clone, Copy, PartialEq)]
+pub enum Color {
+    Default,
+    // basic colors
+    Black,
+    Red,
+    Green,
+    Yellow,
+    Blue,
+    Magenta,
+    Cyan,
+    White,
+    // bright colors
+    BrightBlack,
+    BrightRed,
+    BrightGreen,
+    BrightYellow,
+    BrightBlue,
+    BrightMagenta,
+    BrightCyan,
+    BrightWhite,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub struct Cell {
+    ch: char,
+    fg: Color,
+    bg: Color,
+}
+
+impl Cell {
+    pub fn new(ch: char, fg: Color, bg: Color) -> Cell {
+        Cell { ch, fg, bg }
+    }
+}
+
+impl Default for Cell {
+    fn default() -> Self {
+        Cell {
+            ch: '\x20',
+            fg: Color::Default,
+            bg: Color::Default,
+        }
+    }
+}
+
 struct Buffer {
     width: usize,
     height: usize,
-    tiles: Vec<u8>,
+    cells: Vec<Cell>,
 }
 
 impl Buffer {
@@ -59,22 +105,22 @@ impl Buffer {
         Self {
             width,
             height,
-            tiles: vec![0x20; width * height],
+            cells: vec![Cell::default(); width * height],
         }
     }
 
     fn clear(&mut self) {
-        self.tiles.fill(0x20);
+        self.cells.fill(Cell::default());
     }
 
-    fn get(&self, x: usize, y: usize) -> u8 {
+    fn get(&self, x: usize, y: usize) -> Cell {
         debug_assert!(x < self.width && y < self.height);
-        self.tiles[y * self.width + x]
+        self.cells[y * self.width + x]
     }
 
-    fn set(&mut self, x: usize, y: usize, tile: u8) {
+    fn set(&mut self, x: usize, y: usize, cell: Cell) {
         debug_assert!(x < self.width && y < self.height);
-        self.tiles[y * self.width + x] = tile;
+        self.cells[y * self.width + x] = cell;
     }
 }
 

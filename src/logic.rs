@@ -1,11 +1,14 @@
 use level::Level;
+use messages::MessageLog;
 
 mod fov;
 mod generate;
 mod level;
+mod messages;
 
 pub struct Game {
     level: Level,
+    log: MessageLog,
 }
 
 impl Game {
@@ -15,7 +18,11 @@ impl Game {
         let player = Entity::new(x, y, Glyph::Player);
         level.add_player(player);
         level.update_vision();
-        Game { level }
+
+        let mut log = MessageLog::new(100);
+        log.append("Welcome to the Dungeon!");
+
+        Game { level, log }
     }
 
     pub fn move_player(&mut self, dx: i8, dy: i8) -> Result<(), ()> {
@@ -29,6 +36,7 @@ impl Game {
                 && y < self.level.height()
                 && self.level.get_tile(x, y) == Tile::Floor
             {
+                self.log.start_turn();
                 let player = self.level.player_mut().unwrap();
                 player.set_pos(x, y);
                 self.level.update_vision();
@@ -40,6 +48,10 @@ impl Game {
 
     pub fn level(&self) -> &Level {
         &self.level
+    }
+
+    pub fn log(&self) -> &MessageLog {
+        &self.log
     }
 }
 

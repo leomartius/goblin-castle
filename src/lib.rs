@@ -2,17 +2,27 @@ use std::io;
 
 use console::{Console, Event};
 use logic::Game;
+use ui::render;
 
 mod console;
 mod logic;
-mod render;
+mod ui;
 
 pub fn run() -> Result<(), io::Error> {
-    let mut console = Console::new(80, 24, "Goblin Castle")?;
+    let mut console = Console::new(ui::CONSOLE_WIDTH, ui::CONSOLE_HEIGHT, "Goblin Castle")?;
     let mut game = Game::new();
 
     loop {
-        render::render_map(&mut console, &game)?;
+        console.clear();
+        render::render_map(&mut console, ui::MAP_OFFSET_X, ui::MAP_OFFSET_Y, &game);
+        render::render_log(
+            &mut console,
+            ui::LOG_OFFSET_X,
+            ui::LOG_OFFSET_Y,
+            ui::LOG_LINES,
+            &game,
+        );
+        console.display()?;
 
         match get_command(&mut console)? {
             Command::Move(dx, dy) => game.move_player(dx, dy).or_else(|_| console.alert())?,

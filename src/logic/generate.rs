@@ -75,7 +75,7 @@ impl Room {
 
 pub fn generate_level() -> Level {
     let width = 80;
-    let height = 24;
+    let height = 38;
     let mut rng = seeded_rng();
     let mut rooms: Vec<Room> = Vec::new();
 

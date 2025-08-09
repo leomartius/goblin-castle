@@ -24,3 +24,15 @@ pub fn explored_tile(tile: &Tile) -> Cell {
         Tile::Floor => Cell::new('.', Color::BrightBlack, Color::Black),
     }
 }
+
+pub fn log_message_fg(age: u64) -> Color {
+    match age {
+        0 => Color::BrightWhite,
+        1 => Color::White,
+        _ => Color::BrightBlack,
+    }
+}
+
+pub fn log_message_bg(_age: u64) -> Color {
+    Color::Black
+}

@@ -30,6 +30,15 @@ impl Console {
         self.back.set(x, y, cell);
     }
 
+    pub fn print(&mut self, x0: usize, y0: usize, text: &str, fg: Color, bg: Color) {
+        for (dx, ch) in text.chars().enumerate() {
+            if x0 + dx >= self.back.width {
+                break;
+            }
+            self.back.set(x0 + dx, y0, Cell { ch, fg, bg });
+        }
+    }
+
     pub fn show_cursor(&mut self, x: usize, y: usize) {
         self.cursor = Some((x, y));
     }

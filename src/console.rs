@@ -26,6 +26,10 @@ impl Console {
         self.cursor = None;
     }
 
+    pub fn clear_rect(&mut self, x: usize, y: usize, width: usize, height: usize) {
+        self.back.fill_rect(x, y, width, height, Cell::default());
+    }
+
     pub fn set_cell(&mut self, x: usize, y: usize, cell: Cell) {
         self.back.set(x, y, cell);
     }
@@ -39,8 +43,17 @@ impl Console {
         }
     }
 
+    pub fn dim(&mut self) {
+        self.back
+            .apply(|cell| *cell = Cell::new(cell.ch, cell.fg.to_dim(), cell.bg.to_dim()));
+    }
+
     pub fn show_cursor(&mut self, x: usize, y: usize) {
         self.cursor = Some((x, y));
+    }
+
+    pub fn hide_cursor(&mut self) {
+        self.cursor = None;
     }
 
     pub fn display(&mut self) -> Result<(), io::Error> {
@@ -57,6 +70,7 @@ impl Console {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Copy, PartialEq)]
 pub enum Color {
     Default,
@@ -78,6 +92,25 @@ pub enum Color {
     BrightMagenta,
     BrightCyan,
     BrightWhite,
+}
+
+impl Color {
+    fn to_dim(self) -> Self {
+        match self {
+            // light/dark pairs
+            Color::BrightRed => Color::Red,
+            Color::BrightGreen => Color::Green,
+            Color::BrightYellow => Color::Yellow,
+            Color::BrightBlue => Color::Blue,
+            Color::BrightMagenta => Color::Magenta,
+            Color::BrightCyan => Color::Cyan,
+            // grayscale
+            Color::White => Color::BrightBlack,
+            Color::BrightWhite => Color::BrightBlack,
+            // unchanged
+            _ => self,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -131,9 +164,35 @@ impl Buffer {
         debug_assert!(x < self.width && y < self.height);
         self.cells[y * self.width + x] = cell;
     }
+
+    fn fill_rect(&mut self, x0: usize, y0: usize, width: usize, height: usize, value: Cell) {
+        debug_assert!(x0 + width <= self.width && y0 + height <= self.height);
+        for y in y0..y0 + height {
+            self.cells[y * self.width + x0..y * self.width + x0 + width].fill(value);
+        }
+    }
+
+    fn apply<F>(&mut self, transform: F)
+    where
+        F: FnMut(&mut Cell),
+    {
+        self.cells.iter_mut().for_each(transform);
+    }
 }
 
 pub enum Event {
-    Key(char),
     Abort,
+    KeyChar(char),
+    KeySpecial(Key),
+}
+
+pub enum Key {
+    Left,
+    Right,
+    Up,
+    Down,
+    Home,
+    End,
+    PgUp,
+    PgDn,
 }

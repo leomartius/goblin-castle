@@ -36,3 +36,43 @@ pub fn log_message_fg(age: u64) -> Color {
 pub fn log_message_bg(_age: u64) -> Color {
     Color::Black
 }
+
+pub enum Decoration {
+    TopLeftCorner,
+    TopRightCorner,
+    BottomLeftCorner,
+    BottomRightCorner,
+    Horizontal,
+    Vertical,
+    LeftBracket,
+    RightBracket,
+}
+
+pub fn box_decoration(which: Decoration) -> Cell {
+    match which {
+        Decoration::TopLeftCorner => Cell::new('┌', box_fg(), box_bg()),
+        Decoration::TopRightCorner => Cell::new('┐', box_fg(), box_bg()),
+        Decoration::BottomLeftCorner => Cell::new('└', box_fg(), box_bg()),
+        Decoration::BottomRightCorner => Cell::new('┘', box_fg(), box_bg()),
+        Decoration::Horizontal => Cell::new('─', box_fg(), box_bg()),
+        Decoration::Vertical => Cell::new('│', box_fg(), box_bg()),
+        Decoration::LeftBracket => Cell::new('┤', box_fg(), box_bg()),
+        Decoration::RightBracket => Cell::new('├', box_fg(), box_bg()),
+    }
+}
+
+pub fn box_fg() -> Color {
+    Color::BrightWhite
+}
+
+pub fn box_bg() -> Color {
+    Color::Black
+}
+
+pub fn history_fg() -> Color {
+    Color::White
+}
+
+pub fn history_bg() -> Color {
+    Color::Black
+}

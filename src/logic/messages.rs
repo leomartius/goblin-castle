@@ -34,4 +34,16 @@ impl MessageLog {
             .rev()
             .map(|(msg, turn)| (msg.as_str(), self.curr_turn - *turn))
     }
+
+    pub fn peek(&self, start: usize, count: usize) -> impl Iterator<Item = &str> {
+        self.messages
+            .iter()
+            .skip(start)
+            .take(count)
+            .map(|(msg, _)| msg.as_str())
+    }
+
+    pub fn len(&self) -> usize {
+        self.messages.len()
+    }
 }

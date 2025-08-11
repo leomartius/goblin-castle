@@ -4,11 +4,11 @@ use crossterm::{
     cursor::{self, MoveTo},
     event::{KeyCode, KeyEventKind, KeyModifiers},
     execute, queue,
-    style::{Print, SetBackgroundColor, SetForegroundColor},
-    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen, SetTitle},
+    style::{self, Print, SetBackgroundColor, SetForegroundColor},
+    terminal::{self, ClearType::All, EnterAlternateScreen, LeaveAlternateScreen, SetTitle},
 };
 
-use super::{Buffer, Event};
+use super::{Buffer, Event, Key};
 
 use super::Color as ApiColor;
 use crossterm::style::Color as TermColor;
@@ -86,8 +86,20 @@ impl Terminal {
                 if key.code == KeyCode::Char('c') && key.modifiers == KeyModifiers::CONTROL {
                     return Ok(Event::Abort);
                 }
-                if let KeyCode::Char(ch) = key.code {
-                    return Ok(Event::Key(ch));
+                if key.modifiers == KeyModifiers::NONE {
+                    let e = match key.code {
+                        KeyCode::Char(ch) => Event::KeyChar(ch),
+                        KeyCode::Left => Event::KeySpecial(Key::Left),
+                        KeyCode::Right => Event::KeySpecial(Key::Right),
+                        KeyCode::Up => Event::KeySpecial(Key::Up),
+                        KeyCode::Down => Event::KeySpecial(Key::Down),
+                        KeyCode::Home => Event::KeySpecial(Key::Home),
+                        KeyCode::End => Event::KeySpecial(Key::End),
+                        KeyCode::PageUp => Event::KeySpecial(Key::PgUp),
+                        KeyCode::PageDown => Event::KeySpecial(Key::PgDn),
+                        _ => continue,
+                    };
+                    return Ok(e);
                 }
             }
         }
@@ -123,10 +135,12 @@ impl AltScreen {
     pub fn enter() -> Result<Self, io::Error> {
         terminal::enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide, EnterAlternateScreen)?;
+        execute!(io::stdout(), style::ResetColor, terminal::Clear(All))?;
         Ok(Self)
     }
 
     fn leave() -> Result<(), io::Error> {
+        execute!(io::stdout(), style::ResetColor, terminal::Clear(All))?;
         execute!(io::stdout(), LeaveAlternateScreen, cursor::Show)?;
         terminal::disable_raw_mode()
     }
